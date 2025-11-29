@@ -10,10 +10,26 @@ You need Java 17+ to run the Spring Boot Servers, and Docker to run the Kafka im
 
 ## Branches
 
+Note that the branches other than main doesn't have README.md for consistency.
+
 1. **main**: One Producer, One Broker, One Consumer
 
    ![main branch](./images/kafka_main.png)
+   
+   If you created the Kafka topic with the main branch, you should increase the number of partitions for other branches.
+   
+   For example, execute this command in the Kafka container to set the number of partitions to three.
+   
+   ```bash
+   opt/kafka/bin/kafka-topics.sh --alter --topic my-topic --partitions 3 --bootstrap-server kafka:9092
+   ```
 
+2. **two-consumers**
+
+   ![two-consumers branch](./images/kafka_two_consumers.png)
+
+   Topic has three partitions in the branch if initialized with docker compose.
+   
 ---
 
 ## How to Run
