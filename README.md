@@ -24,6 +24,14 @@ In the root path,
 docker compose up
 ```
 
-It will start all the containers needed.
+It will start all the containers needed and create topic "my-topic".
 
 **The main branch doesn't run producer and consumer server with the docker compose file**. You should run Spring Boot applications on your own with the preferred tools(IDEs, bash, etc).
+
+To test the how main branch works,
+
+```bash
+curl http://localhost:8080/send?message=hello
+```
+
+This should return "ok".
