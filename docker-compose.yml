@@ -1,6 +1,6 @@
 services:
   kafka:
-    image: apache/kafka:latest
+    image: apache/kafka:4.1.1
     ports:
       - "9092:9092"
     environment:
@@ -20,7 +20,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       
   kafka-init:
-    image: apache/kafka:latest
+    image: apache/kafka:4.1.1
     depends_on:
       - kafka
     entrypoint: ['/bin/sh', '-c']

@@ -1,53 +1,87 @@
-This is a template project to run Kafka with Spring Boot servers.
-
-## Dependencies
-
-The project uses 'apache/kafka:latest' docker image for Kafka, Spring Boot 4.0.0 for servers. Details can be found in `build.gradle` in each module(e.g. consumer).
-
-You need Java 17+ to run the Spring Boot Servers, and Docker to run the Kafka images, and Spring Boot servers except for the main branch.
+Spring Kafka의 직렬화/역직렬화 오류를 해결하기 위해 실험한 브랜치입니다.
 
 ---
 
-## Branches
+## 구성
 
-Note that the branches other than main doesn't have README.md for consistency.
-
-1. **main**: One Producer, One Broker, One Consumer
-
-   ![main branch](./images/kafka_main.png)
+![실험용 브랜치 아키텍처](./images/kafka_main.png)
    
-   If you created the Kafka topic with the main branch, you should increase the number of partitions for other branches.
-   
-   For example, execute this command in the Kafka container to set the number of partitions to three.
-   
-   ```bash
-   opt/kafka/bin/kafka-topics.sh --alter --topic my-topic --partitions 3 --bootstrap-server kafka:9092
-   ```
+생산자 - 카프카 - 소비자가 연결되어 있습니다.
 
-2. **two-consumers**
+### 속성
 
-   ![two-consumers branch](./images/kafka_two_consumers.png)
+최종적으로 동작하는 application.yml 파일 내용입니다.
 
-   Topic has three partitions in the branch if initialized with docker compose.
-   
+1. 생산자
+
+  ```yaml
+  spring:
+    application:
+      name: kafka_producer
+
+    kafka:
+      bootstrap-servers: localhost:9092
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        properties:
+          spring.json.add.type.headers: false
+  ```
+
+2. 소비자
+
+  ```yaml
+  spring:
+    application:
+      name: kafka_consumer
+
+    kafka:
+      bootstrap-servers: localhost:9092
+      consumer:
+        group-id: my-group
+        auto-offset-reset: earliest
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+        properties:
+          spring.json.trusted.packages: "*"
+          spring.json.value.default.type: hello.kafka.MyMessage
+  ```
+
+### 생산자의 메시지 클래스
+
+생산자의 메시지 클래스는 다음과 같습니다. `__TypeId__` 오류를 재현하기 위해 일부러 생산자에서는 메시지 클래스를 dto 패키지 하위에 두었습니다.
+
+```java
+package hello.kafka.dto;
+
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public class MyMessage {
+    private String message;
+    private LocalDateTime createdAt;
+}
+```
+
 ---
 
-## How to Run
+## 실행 방법
 
-In the root path,
+최상위 경로에서 카프카를 실행하기 위해 도커를 사용합니다.
 
 ```bash
 docker compose up
 ```
 
-It will start all the containers needed and create topic "my-topic".
+카프카는 localhost:9092로 접근할 수 있으며, 기본으로 `my-topic` 토픽이 생성됩니다.
 
-**The main branch doesn't run producer and consumer server with the docker compose file**. You should run Spring Boot applications on your own with the preferred tools(IDEs, bash, etc).
-
-To test the how main branch works,
+생산자를 실행한 뒤 다음 curl로 메시지를 전송할 수 있습니다.
 
 ```bash
 curl http://localhost:8080/send?message=hello
 ```
 
-This should return "ok".
+정상 처리 시 "ok"가 반환됩니다.
